@@ -1,6 +1,5 @@
 const cheerio = require('cheerio');
 const got = require('got');
-const ms = require('ms');
 
 let signalThreshold = 35;
 let threshold = 50;
@@ -27,13 +26,46 @@ async function loadIncidenceData() {
 
   let img = header.parent().parent().next().find('img');
 
+  // Vaccinations
+
+  let vaccinationsHeader = $('h2')
+    .filter((_, el) => $(el).text().trim() === 'Aktuelle Impfzahlen')
+    .parent();
+
+  let vaccinationsParagraph = vaccinationsHeader.next().find('p:first-child');
+  let vaccinationsText = vaccinationsParagraph.text().trim();
+  let total = vaccinationsText
+    .match(/([\d.]+)(.*Impfdosen)/)[1]
+    .replace('.', '');
+
+  let vaccinationsLastUpdate = vaccinationsText.match(/(\(Stand )(.*)(\))/)[2];
+
+  let details = vaccinationsParagraph.next().text().trim();
+  let [
+    fullyVaccinated,
+    percentFullyVaccinated,
+    primaryVaccinated,
+    percentPrimaryVaccinated,
+  ] = details
+    .match(/([\d.]+)/g)
+    .map((s) => s.replace('.', ''))
+    .filter((s) => s);
+
   return {
     incidence,
     definition,
-    lastUpdate,
+    lastUpdate: lastUpdate.split(',')[0],
     overSignalThreshold: incidence > signalThreshold,
     overThreshold: incidence > threshold,
     overDarkredThreshold: incidence > darkredThreshold,
+    vaccinations: {
+      total,
+      fullyVaccinated,
+      percentFullyVaccinated,
+      primaryVaccinated,
+      percentPrimaryVaccinated,
+      lastUpdate: vaccinationsLastUpdate,
+    },
     img: {
       src: `https://www.augsburg.de${img.attr('src')}`,
       width: img.attr('width'),
