@@ -111,8 +111,12 @@ async function loadCaseNumbers() {
 module.exports = async (req, res) => {
   let incidenceData = await loadIncidenceData();
   let caseNumbers = await loadCaseNumbers();
+  let maxAge = 1800;
 
-  res.setHeader('Cache-Control', 'max-age=10800, s-maxage=10800, stale-while-revalidate');
+  res.setHeader(
+    'Cache-Control',
+    `max-age=${maxAge}, s-maxage=${maxAge}, stale-while-revalidate`
+  );
   res.setHeader('Content-Type', 'application/json');
   res.send(
     JSON.stringify(
